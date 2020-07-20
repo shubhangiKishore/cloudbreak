@@ -16,6 +16,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import com.sequenceiq.sdx.api.model.RangerCloudIdentitySyncStatus;
 import com.sequenceiq.sdx.api.model.SetRangerCloudIdentityMappingRequest;
 import org.springframework.validation.annotation.Validated;
 
@@ -202,7 +203,14 @@ public interface SdxEndpoint {
     @POST
     @Path("/envcrn/{envCrn}/ranger_cloud_identity_mapping")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "set ranger cloud identity mapping", produces = MediaType.APPLICATION_JSON, nickname = "setRangerCloudIdentityMapping")
-    void setRangerCloudIdentityMapping(@PathParam("envCrn") @ValidCrn String envCrn, @NotNull @Valid SetRangerCloudIdentityMappingRequest request);
+    @ApiOperation(value = "Set ranger cloud identity mapping", produces = MediaType.APPLICATION_JSON, nickname = "setRangerCloudIdentityMapping")
+    RangerCloudIdentitySyncStatus setRangerCloudIdentityMapping(@PathParam("envCrn") @ValidCrn String envCrn,
+            @NotNull @Valid SetRangerCloudIdentityMappingRequest request);
+
+    @POST
+    @Path("/envcrn/{envCrn}/ranger_cloud_identity_sync_status")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get status of a ranger cloud identity sync", produces = MediaType.APPLICATION_JSON, nickname = "getRangerCloudIdentitySyncStatus")
+    RangerCloudIdentitySyncStatus getRangerCloudIdentitySyncStatus(@PathParam("envCrn") @ValidCrn String envCrn, long commandId);
 
 }

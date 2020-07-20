@@ -9,6 +9,7 @@ import javax.validation.Valid;
 
 import com.sequenceiq.authorization.annotation.InternalOnly;
 import com.sequenceiq.datalake.cm.RangerCloudIdentityService;
+import com.sequenceiq.sdx.api.model.RangerCloudIdentitySyncStatus;
 import com.sequenceiq.sdx.api.model.SetRangerCloudIdentityMappingRequest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Controller;
@@ -286,10 +287,17 @@ public class SdxController implements SdxEndpoint {
 
     @Override
     @InternalOnly
-    public void setRangerCloudIdentityMapping(String envCrn, SetRangerCloudIdentityMappingRequest request) {
+    public RangerCloudIdentitySyncStatus setRangerCloudIdentityMapping(String envCrn, SetRangerCloudIdentityMappingRequest request) {
         if (request.getAzureGroupMapping() != null) {
             throw new IllegalArgumentException("Azure group mappings is unsupported");
         }
-        rangerCloudIdentityService.setAzureCloudIdentityMapping(envCrn, request.getAzureUserMapping());
+        return rangerCloudIdentityService.setAzureCloudIdentityMapping(envCrn, request.getAzureUserMapping());
     }
+
+    @Override
+    @InternalOnly
+    public RangerCloudIdentitySyncStatus getRangerCloudIdentitySyncStatus(String envCrn, long commandId) {
+        return rangerCloudIdentityService.getRangerCloudIdentitySyncStatus(envCrn, commandId);
+    }
+
 }

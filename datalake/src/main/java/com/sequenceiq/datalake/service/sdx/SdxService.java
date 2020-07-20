@@ -165,6 +165,17 @@ public class SdxService implements ResourceIdProvider, ResourceBasedCrnProvider 
         }
     }
 
+    public SdxCluster getByClusterCrn(String clusterCrn) {
+        LOGGER.info("Searching for SDX cluster by crn {}", clusterCrn);
+        String accountIdFromCrn = getAccountIdFromCrn(clusterCrn);
+        Optional<SdxCluster> sdxCluster = sdxClusterRepository.findByAccountIdAndCrnAndDeletedIsNull(accountIdFromCrn, clusterCrn);
+        if (sdxCluster.isPresent()) {
+            return sdxCluster.get();
+        } else {
+            throw notFound("SDX cluster", clusterCrn).get();
+        }
+    }
+
     public SdxCluster getSdxByNameInAccount(String userCrn, String name) {
         LOGGER.info("Searching for SDX cluster by name {}", name);
         String accountIdFromCrn = getAccountIdFromCrn(userCrn);
@@ -578,12 +589,12 @@ public class SdxService implements ResourceIdProvider, ResourceBasedCrnProvider 
                 .toString();
     }
 
-    public String getAccountIdFromCrn(String userCrn) {
+    public String getAccountIdFromCrn(String crnStr) {
         try {
-            Crn crn = Crn.safeFromString(userCrn);
+            Crn crn = Crn.safeFromString(crnStr);
             return crn.getAccountId();
         } catch (NullPointerException | CrnParseException e) {
-            throw new BadRequestException("Can not parse CRN to find account ID: " + userCrn);
+            throw new BadRequestException("Can not parse CRN to find account ID: " + crnStr);
         }
     }
 

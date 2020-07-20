@@ -4,16 +4,19 @@ import com.cloudera.thunderhead.service.usermanagement.UserManagementProto.Cloud
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.sequenceiq.cloudbreak.common.mappable.CloudPlatform;
+import com.sequenceiq.cloudbreak.common.service.Clock;
 import com.sequenceiq.freeipa.entity.Stack;
 import com.sequenceiq.freeipa.service.freeipa.user.model.FmsUser;
 import com.sequenceiq.freeipa.service.freeipa.user.model.UmsUsersState;
 import com.sequenceiq.sdx.api.endpoint.SdxEndpoint;
+import com.sequenceiq.sdx.api.model.RangerCloudIdentitySyncStatus;
 import com.sequenceiq.sdx.api.model.SetRangerCloudIdentityMappingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +28,13 @@ import java.util.stream.Collectors;
 public class CloudIdentitySyncService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CloudIdentitySyncService.class);
+
+    private static final int SYNC_TIMEOUT_MS = 1000 * 4;
+
+    private static final int SYNC_SLEEP_INTERVAL_MS = 400;
+
+    @Inject
+    private Clock clock;
 
     @Inject
     private SdxEndpoint sdxEndpoint;
@@ -48,13 +58,46 @@ public class CloudIdentitySyncService {
 
             SetRangerCloudIdentityMappingRequest setRangerCloudIdentityMappingRequest = new SetRangerCloudIdentityMappingRequest();
             setRangerCloudIdentityMappingRequest.setAzureUserMapping(userToAzureObjectIdMap);
-            // TODO The SDX endpoint currently sets the config and triggers refresh. The SDX endpoint should also be updated
-            //      to allow polling the status of the refresh.
+
             LOGGER.debug("Setting ranger cloud identity mapping: {}", setRangerCloudIdentityMappingRequest);
-            sdxEndpoint.setRangerCloudIdentityMapping(envCrn, setRangerCloudIdentityMappingRequest);
+            RangerCloudIdentitySyncStatus syncStatus = sdxEndpoint.setRangerCloudIdentityMapping(envCrn, setRangerCloudIdentityMappingRequest);
+
+            // The sync status represents a cloud identity sync that may still be in progress, which we need to poll to check for completion.
+            pollSyncStatus(syncStatus, envCrn, warnings);
         } catch (Exception e) {
             LOGGER.warn("Failed to set cloud identity mapping for environment {}", envCrn, e);
             warnings.accept(envCrn, "Failed to set cloud identity mapping");
+        }
+    }
+
+    private void pollSyncStatus(RangerCloudIdentitySyncStatus syncStatus, String envCrn, BiConsumer<String, String> warnings) {
+        // NOTE: Although it's synchronously polling, in practice this sync takes less than a second to complete
+        Instant startTime = clock.getCurrentInstant();
+        while (true) {
+            LOGGER.info("syncStatus = {}", syncStatus);
+            switch (syncStatus.getState()) {
+                case SUCCESS:
+                    LOGGER.info("Successfully synced cloud identity, envCrn = {}", envCrn);
+                    return;
+                case FAILED:
+                    LOGGER.error("Failed to sync cloud identity, envCrn = {}", envCrn);
+                    warnings.accept(envCrn, "Failed to sync cloud identity into environment");
+                    return;
+                default:
+                    LOGGER.info("Sync is in progress, retrying");
+                    try {
+                        Thread.sleep(SYNC_SLEEP_INTERVAL_MS);
+                    } catch (InterruptedException e) {
+                        LOGGER.error("Interrupted during cloud identity sync", e);
+                        warnings.accept(envCrn, "Interrupted during cloud identity sync");
+                    }
+                    long commandId = syncStatus.getCommandId();
+                    syncStatus = sdxEndpoint.getRangerCloudIdentitySyncStatus(envCrn, commandId);
+            }
+            if (clock.getCurrentInstant().isAfter(startTime.plusMillis(SYNC_TIMEOUT_MS))) {
+                LOGGER.error("Timed out syncing cloud identity into environment, envCrn = {}, syncStatus = {}", envCrn, syncStatus);
+                warnings.accept(envCrn, "Timed out syncing cloud identity into environment");
+            }
         }
     }
 
