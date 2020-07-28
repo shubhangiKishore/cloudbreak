@@ -43,7 +43,7 @@ public class BackupRestoreStatusService {
 
     public void handleDatabaseBackupFailure(long stackId, String errorReason, DetailedStackStatus detailedStatus) {
         clusterService.updateClusterStatusByStackId(stackId, Status.BACKUP_FAILED, errorReason);
-        stackUpdater.updateStackStatus(stackId, detailedStatus);
+        stackUpdater.updateStackStatus(stackId, detailedStatus, extractSaltErrorIfAvailable(errorReason));
         flowMessageService.fireEventAndLog(stackId, Status.UPDATE_FAILED.name(), DATALAKE_DATABASE_BACKUP_FAILED, errorReason);
     }
 
@@ -61,7 +61,15 @@ public class BackupRestoreStatusService {
 
     public void handleDatabaseRestoreFailure(long stackId, String errorReason, DetailedStackStatus detailedStatus) {
         clusterService.updateClusterStatusByStackId(stackId, Status.RESTORE_FAILED, errorReason);
-        stackUpdater.updateStackStatus(stackId, detailedStatus);
+        stackUpdater.updateStackStatus(stackId, detailedStatus, extractSaltErrorIfAvailable(errorReason));
         flowMessageService.fireEventAndLog(stackId, Status.UPDATE_FAILED.name(), DATALAKE_DATABASE_RESTORE_FAILED, errorReason);
+    }
+
+    private String extractSaltErrorIfAvailable(String errorReason) {
+        String errors = "Error(s): ";
+        if (errorReason.contains(errors)) {
+            return errorReason.substring(errorReason.indexOf(errors) + errors.length()).replaceAll("\n", "; ");
+        }
+        return errorReason;
     }
 }
