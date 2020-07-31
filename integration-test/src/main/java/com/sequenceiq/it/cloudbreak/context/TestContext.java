@@ -38,9 +38,11 @@ import com.sequenceiq.it.cloudbreak.FreeIpaClient;
 import com.sequenceiq.it.cloudbreak.MicroserviceClient;
 import com.sequenceiq.it.cloudbreak.RedbeamsClient;
 import com.sequenceiq.it.cloudbreak.SdxClient;
+import com.sequenceiq.it.cloudbreak.UmsClient;
 import com.sequenceiq.it.cloudbreak.action.Action;
 import com.sequenceiq.it.cloudbreak.actor.Actor;
 import com.sequenceiq.it.cloudbreak.actor.CloudbreakUser;
+import com.sequenceiq.it.cloudbreak.actor.CloudbreakUserCache;
 import com.sequenceiq.it.cloudbreak.assertion.Assertion;
 import com.sequenceiq.it.cloudbreak.cloud.v4.CloudProviderProxy;
 import com.sequenceiq.it.cloudbreak.cloud.v4.CommonCloudProperties;
@@ -55,9 +57,9 @@ import com.sequenceiq.it.cloudbreak.dto.sdx.SdxTestDto;
 import com.sequenceiq.it.cloudbreak.finder.Attribute;
 import com.sequenceiq.it.cloudbreak.finder.Capture;
 import com.sequenceiq.it.cloudbreak.finder.Finder;
-import com.sequenceiq.it.cloudbreak.util.ErrorLogMessageProvider;
 import com.sequenceiq.it.cloudbreak.log.Log;
 import com.sequenceiq.it.cloudbreak.mock.DefaultModel;
+import com.sequenceiq.it.cloudbreak.util.ErrorLogMessageProvider;
 import com.sequenceiq.it.cloudbreak.util.ResponseUtil;
 import com.sequenceiq.it.cloudbreak.util.wait.FlowUtil;
 import com.sequenceiq.it.cloudbreak.util.wait.service.WaitService;
@@ -190,6 +192,8 @@ public abstract class TestContext implements ApplicationContextAware {
     private boolean initialized;
 
     private CloudbreakUser actingUser;
+
+    private CloudbreakUserCache userCache = new CloudbreakUserCache();
 
     public Duration getPollingDurationInMills() {
         return Duration.of(pollingInterval, ChronoUnit.MILLIS);
@@ -372,10 +376,12 @@ public abstract class TestContext implements ApplicationContextAware {
             FreeIpaClient freeIpaClient = FreeIpaClient.createProxyFreeIpaClient(testParameter, acting);
             EnvironmentClient environmentClient = EnvironmentClient.createProxyEnvironmentClient(testParameter, acting);
             SdxClient sdxClient = SdxClient.createProxySdxClient(testParameter, acting);
+            UmsClient umsClient = UmsClient.createProxyUmsClient(testParameter, acting);
             RedbeamsClient redbeamsClient = RedbeamsClient.createProxyRedbeamsClient(testParameter, acting);
             Map<Class<? extends MicroserviceClient>, MicroserviceClient> clientMap = Map.of(CloudbreakClient.class, cloudbreakClient,
                     FreeIpaClient.class, freeIpaClient, EnvironmentClient.class, environmentClient, SdxClient.class, sdxClient,
-                    RedbeamsClient.class, redbeamsClient);
+                    RedbeamsClient.class, redbeamsClient,
+                    UmsClient.class, umsClient);
             clients.put(acting.getAccessKey(), clientMap);
             clients.put(INTERNAL_ACTOR_ACCESS_KEY, clientMap);
             cloudbreakClient.setWorkspaceId(0L);
@@ -450,6 +456,10 @@ public abstract class TestContext implements ApplicationContextAware {
             getExceptionMap().put(key, e);
         }
         return bean;
+    }
+
+    public CloudbreakUserCache getUserCache() {
+        return userCache;
     }
 
     public <O extends CloudbreakTestDto> O given(Class<O> clss) {
@@ -892,6 +902,10 @@ public abstract class TestContext implements ApplicationContextAware {
             LOGGER.info("Run with given user. {}", who);
             return who;
         }
+    }
+
+    public CloudbreakUser getUser(String userKey) {
+        return userCache.getByName(userKey);
     }
 
     private <T> String getKeyForAwait(T entity, Class<? extends T> entityClass, RunningParameter runningParameter) {

@@ -11,6 +11,7 @@ import com.sequenceiq.it.cloudbreak.actor.Actor;
 import com.sequenceiq.it.cloudbreak.client.CredentialTestClient;
 import com.sequenceiq.it.cloudbreak.client.EnvironmentTestClient;
 import com.sequenceiq.it.cloudbreak.client.FreeIpaTestClient;
+import com.sequenceiq.it.cloudbreak.client.UmsTestClient;
 import com.sequenceiq.it.cloudbreak.context.Description;
 import com.sequenceiq.it.cloudbreak.context.MockedTestContext;
 import com.sequenceiq.it.cloudbreak.context.RunningParameter;
@@ -37,6 +38,9 @@ public class EnvironmentCreateTest extends AbstractIntegrationTest {
     @Inject
     private FreeIpaRouteHandler freeIpaRouteHandler;
 
+    @Inject
+    private UmsTestClient umsTestClient;
+
     @Override
     protected void setupTest(TestContext testContext) {
         useRealUmsUser(testContext, AuthUserKeys.ACCOUNT_ADMIN);
@@ -62,17 +66,20 @@ public class EnvironmentCreateTest extends AbstractIntegrationTest {
                 .await(EnvironmentStatus.AVAILABLE)
 
                 // testing unauthorized calls for environment
-                .when(environmentTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(environmentTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/describeEnvironment on resource crn:cdp.*")
                                 .withKey("EnvironmentGetAction"))
-                .when(environmentTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.ZERO_RIGHTS)))
+                .when(environmentTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.ZERO_RIGHTS, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/describeEnvironment on resource crn:cdp.*")
                                 .withKey("EnvironmentGetAction"));
         testFreeipaCreation(testContext, mockedTestContext);
         testContext
                 .given(EnvironmentTestDto.class)
+                //after assignment describe should work for the environment
+                .assignRole(umsTestClient.assignDatahubCreatorRole(AuthUserKeys.MGMT_CONSOLE_ADMIN_B))
+                .when(environmentTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .when(environmentTestClient.delete())
                 .awaitForFlow(RunningParameter.key("EnvironmentDeleteAction"))
                 .validate();
@@ -93,15 +100,15 @@ public class EnvironmentCreateTest extends AbstractIntegrationTest {
                 .await(Status.AVAILABLE)
 
                 //testing unathorized freeipa calls for the environment
-                .when(freeIpaTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(freeIpaTestClient.describe(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/describeEnvironment on resource crn:cdp.*")
                                 .withKey("FreeIpaDescribeAction"))
-                .when(freeIpaTestClient.stop(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(freeIpaTestClient.stop(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/stopEnvironment on resource crn:cdp.*")
                                 .withKey("FreeIpaStopAction"))
-                .when(freeIpaTestClient.start(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(freeIpaTestClient.start(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/startEnvironment on resource crn:cdp.*")
                                 .withKey("FreeIpaStartAction"));

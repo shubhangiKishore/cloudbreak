@@ -305,7 +305,7 @@ public abstract class AbstractIntegrationTest extends AbstractMinimalTest {
     }
 
     protected void useRealUmsUser(TestContext testContext, String key) {
-        testContext.as(Actor.useRealUmsUser(key));
+        testContext.as(Actor.useRealUmsUser(key, testContext));
     }
 
     protected void initializeDefaultBlueprints(TestContext testContext) {

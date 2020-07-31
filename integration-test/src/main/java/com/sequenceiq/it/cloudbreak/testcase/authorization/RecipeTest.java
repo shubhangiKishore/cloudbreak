@@ -47,19 +47,19 @@ public class RecipeTest extends AbstractIntegrationTest {
                     Assertions.assertThat(dto.getSimpleResponses().getResponses()).isNotEmpty();
                     return dto;
                 })
-                .when(recipeTestClient.getV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(recipeTestClient.getV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/describeRecipe on resource crn:cdp.*")
                                 .withKey("RecipeGetAction"))
-                .when(recipeTestClient.getV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.ZERO_RIGHTS)))
+                .when(recipeTestClient.getV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.ZERO_RIGHTS, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/describeRecipe on resource crn:cdp.*")
                                 .withKey("RecipeGetAction"))
-                .when(recipeTestClient.deleteV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(recipeTestClient.deleteV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/deleteRecipe on resource crn:cdp.*")
                                 .withKey("RecipeDeleteAction"))
-                .when(recipeTestClient.deleteV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.ZERO_RIGHTS)))
+                .when(recipeTestClient.deleteV4(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.ZERO_RIGHTS, testContext)))
                 .expect(ForbiddenException.class,
                         RunningParameter.expectedMessage("You have no right to perform environments/deleteRecipe on resource crn:cdp.*")
                                 .withKey("RecipeDeleteAction"))

@@ -58,7 +58,7 @@ public class CredentialCreateTest extends AbstractIntegrationTest {
         testContext
                 .given(CredentialTestDto.class)
                 .when(credentialTestClient.create())
-                .when(credentialTestClient.get(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B)))
+                .when(credentialTestClient.get(), RunningParameter.who(Actor.useRealUmsUser(AuthUserKeys.MGMT_CONSOLE_ADMIN_B, testContext)))
                 .expect(ForbiddenException.class, RunningParameter.key("CredentialGetAction")
                         .withExpectedMessage("You have no right to perform environments/describeCredential on resource crn:cdp.*"))
                 .validate();
