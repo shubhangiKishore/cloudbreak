@@ -53,6 +53,9 @@ public class BaseDiagnosticsCollectionRequest {
     @ApiModelProperty(DiagnosticsModelDescription.UPDATE_PACKAGE)
     private Boolean updatePackage = Boolean.FALSE;
 
+    @ApiModelProperty(DiagnosticsModelDescription.SKIP_TEST_CLOUD_STORAGE)
+    private Boolean skipTestCloudStorage = Boolean.FALSE;
+
     public List<String> getLabels() {
         return labels;
     }
@@ -139,5 +142,13 @@ public class BaseDiagnosticsCollectionRequest {
 
     public void setUpdatePackage(Boolean updatePackage) {
         this.updatePackage = updatePackage;
+    }
+
+    public Boolean getSkipTestCloudStorage() {
+        return skipTestCloudStorage;
+    }
+
+    public void setSkipTestCloudStorage(Boolean skipTestCloudStorage) {
+        this.skipTestCloudStorage = skipTestCloudStorage;
     }
 }

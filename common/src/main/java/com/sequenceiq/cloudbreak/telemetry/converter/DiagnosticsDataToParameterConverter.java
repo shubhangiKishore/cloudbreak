@@ -59,6 +59,7 @@ public class DiagnosticsDataToParameterConverter {
         builder.withHosts(request.getHosts());
         builder.withIncludeSaltLogs(request.getIncludeSaltLogs());
         builder.withUpdatePackage(request.getUpdatePackage());
+        builder.withSkipTestCloudStorage(request.getSkipTestCloudStorage());
         builder.withAdditionalLogs(request.getAdditionalLogs());
         return builder.build();
     }
