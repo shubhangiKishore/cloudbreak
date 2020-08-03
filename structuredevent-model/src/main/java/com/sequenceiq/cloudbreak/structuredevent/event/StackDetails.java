@@ -4,11 +4,13 @@ import java.io.Serializable;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.sequenceiq.cloudbreak.structuredevent.json.Base64Deserializer;
 import com.sequenceiq.cloudbreak.structuredevent.json.Base64Serializer;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StackDetails implements Serializable {
     private Long id;
@@ -18,6 +20,8 @@ public class StackDetails implements Serializable {
     private String type;
 
     private String description;
+
+    private String tunnel;
 
     private String region;
 
@@ -38,8 +42,6 @@ public class StackDetails implements Serializable {
     private String cloudbreakVersion;
 
     private String imageIdentifier;
-
-    private String ambariVersion;
 
     private String clusterType;
 
@@ -105,6 +107,14 @@ public class StackDetails implements Serializable {
         this.description = description;
     }
 
+    public String getTunnel() {
+        return tunnel;
+    }
+
+    public void setTunnel(String tunnel) {
+        this.tunnel = tunnel;
+    }
+
     public String getCloudPlatform() {
         return cloudPlatform;
     }
@@ -159,14 +169,6 @@ public class StackDetails implements Serializable {
 
     public void setImageIdentifier(String imageIdentifier) {
         this.imageIdentifier = imageIdentifier;
-    }
-
-    public String getAmbariVersion() {
-        return ambariVersion;
-    }
-
-    public void setAmbariVersion(String ambariVersion) {
-        this.ambariVersion = ambariVersion;
     }
 
     public String getClusterType() {
