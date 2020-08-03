@@ -1,7 +1,10 @@
 package com.sequenceiq.cloudbreak.reactor.handler.cluster.dr;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.sequenceiq.cloudbreak.domain.stack.*;
 import com.sequenceiq.cloudbreak.orchestrator.model.SaltConfig;
 
 import java.net.URISyntaxException;
@@ -32,7 +35,11 @@ public class BackupRestoreSaltConfigGeneratorTest {
     public void testCreateSaltConfig() throws URISyntaxException {
         String cloudPlatform = "aws";
         String location = "/test/backups";
-        SaltConfig saltConfig = saltConfigGenerator.createSaltConfig(location, BACKUP_ID, cloudPlatform);
+        Stack placeholderStack = new Stack();
+        placeholderStack.setCloudPlatform(cloudPlatform);
+
+        SaltConfig saltConfig = saltConfigGenerator.createSaltConfig(location, BACKUP_ID, placeholderStack);
+
         Map<String, Object> properties = saltConfig.getServicePillarConfig().values().iterator().next().getProperties();
         assertEquals(1, properties.size());
         Object object = properties.values().iterator().next();

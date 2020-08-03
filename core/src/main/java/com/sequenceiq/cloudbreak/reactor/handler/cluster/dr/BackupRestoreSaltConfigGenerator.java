@@ -5,6 +5,7 @@ import static com.sequenceiq.cloudbreak.common.type.CloudConstants.AZURE;
 
 import static java.util.Collections.singletonMap;
 
+import com.sequenceiq.cloudbreak.domain.stack.*;
 import com.sequenceiq.cloudbreak.orchestrator.model.SaltConfig;
 import com.sequenceiq.cloudbreak.orchestrator.model.SaltPillarProperties;
 
@@ -18,16 +19,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class BackupRestoreSaltConfigGenerator {
 
-    public SaltConfig createSaltConfig(String location, String backupId, String cloudPlatform) throws URISyntaxException {
-        String fullLocation = buildFullLocation(location, backupId, cloudPlatform);
+    public SaltConfig createSaltConfig(String location, String backupId, Stack stack) throws URISyntaxException {
+        String fullLocation = buildFullLocation(location, backupId, stack.getCloudPlatform());
 
         Map<String, SaltPillarProperties> servicePillar = new HashMap<>();
         servicePillar.put("disaster-recovery", new SaltPillarProperties("/postgresql/disaster_recovery.sls",
             singletonMap("disaster_recovery", singletonMap("object_storage_url", fullLocation))));
+
+        // todo: Add another value to this Map, instead of it being a singleton.
+
         return new SaltConfig(servicePillar);
     }
 
-    String buildFullLocation(String location, String backupId, String cloudPlatform) throws URISyntaxException {
+    private String buildFullLocation(String location, String backupId, String cloudPlatform) throws URISyntaxException {
         URI uri = new URI(location);
         String suffix = '/' + backupId + "_database_backup";
         String fullLocation;
